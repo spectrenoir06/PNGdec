@@ -265,65 +265,66 @@ PNG_STATIC void PNGRGB565(PNGDRAW *pDraw, uint16_t *pPixels, int iEndiannes, uin
             }
             break;
         case PNG_PIXEL_INDEXED: // palette color (can be 1/2/4 or 8 bits per pixel)
-            if (pDraw->pFastPalette) { // faster RGB565 palette exists
-               switch (pDraw->iBpp) {
-                   case 8:
-                       for (x=0; x<pDraw->iWidth; x++) {
-                           c = *s++;
-                           usPixel = pDraw->pFastPalette[c];
-                           if (iEndiannes == PNG_RGB565_BIG_ENDIAN)
-                               usPixel = __builtin_bswap16(usPixel);
-                           *pDest++ = usPixel;
-                       }
-                       break;
-                   case 4:
-                       for (x=0; x<pDraw->iWidth; x+=2) {
-                           c = *s++;
-                           usPixel = pDraw->pFastPalette[c >> 4];
-                           if (iEndiannes == PNG_RGB565_BIG_ENDIAN)
-                               usPixel = __builtin_bswap16(usPixel);
-                           *pDest++ = usPixel;
-                           usPixel = pDraw->pFastPalette[c & 0xf];
-                           if (iEndiannes == PNG_RGB565_BIG_ENDIAN)
-                               usPixel = __builtin_bswap16(usPixel);
-                           *pDest++ = usPixel;
-                       }
-                       break;
-                   case 2:
-                       for (x=0; x<pDraw->iWidth; x+=4) {
-                           c = *s++;
-                           for (j=0; j<4; j++) { // work on pairs of bits
-                               usPixel = pDraw->pFastPalette[c >> 6];
-                               if (iEndiannes == PNG_RGB565_BIG_ENDIAN)
-                                   usPixel = __builtin_bswap16(usPixel);
-                               *pDest++ = usPixel;
-                               c <<= 2;
-                           }
-                       }
-                       break;
-                   case 1:
-                       for (x=0; x<pDraw->iWidth; x+=4) {
-                           c = *s++;
-                           for (j=0; j<8; j++) { // work on pairs of bits
-                               usPixel = pDraw->pFastPalette[c >> 7];
-                               if (iEndiannes == PNG_RGB565_BIG_ENDIAN)
-                                   usPixel = __builtin_bswap16(usPixel);
-                               *pDest++ = usPixel;
-                               c <<= 1;
-                           }
-                       }
-                       break;
-               } // switch on bpp 
-               return;
-            }
+            // if (pDraw->pFastPalette) { // faster RGB565 palette exists
+            //    switch (pDraw->iBpp) {
+            //        case 8:
+            //            for (x=0; x<pDraw->iWidth; x++) {
+            //                c = *s++;
+            //                usPixel = pDraw->pFastPalette[c];
+            //                if (iEndiannes == PNG_RGB565_BIG_ENDIAN)
+            //                    usPixel = __builtin_bswap16(usPixel);
+            //                *pDest++ = usPixel;
+            //            }
+            //            break;
+            //        case 4:
+            //            for (x=0; x<pDraw->iWidth; x+=2) {
+            //                c = *s++;
+            //                usPixel = pDraw->pFastPalette[c >> 4];
+            //                if (iEndiannes == PNG_RGB565_BIG_ENDIAN)
+            //                    usPixel = __builtin_bswap16(usPixel);
+            //                *pDest++ = usPixel;
+            //                usPixel = pDraw->pFastPalette[c & 0xf];
+            //                if (iEndiannes == PNG_RGB565_BIG_ENDIAN)
+            //                    usPixel = __builtin_bswap16(usPixel);
+            //                *pDest++ = usPixel;
+            //            }
+            //            break;
+            //        case 2:
+            //            for (x=0; x<pDraw->iWidth; x+=4) {
+            //                c = *s++;
+            //                for (j=0; j<4; j++) { // work on pairs of bits
+            //                    usPixel = pDraw->pFastPalette[c >> 6];
+            //                    if (iEndiannes == PNG_RGB565_BIG_ENDIAN)
+            //                        usPixel = __builtin_bswap16(usPixel);
+            //                    *pDest++ = usPixel;
+            //                    c <<= 2;
+            //                }
+            //            }
+            //            break;
+            //        case 1:
+            //            for (x=0; x<pDraw->iWidth; x+=4) {
+            //                c = *s++;
+            //                for (j=0; j<8; j++) { // work on pairs of bits
+            //                    usPixel = pDraw->pFastPalette[c >> 7];
+            //                    if (iEndiannes == PNG_RGB565_BIG_ENDIAN)
+            //                        usPixel = __builtin_bswap16(usPixel);
+            //                    *pDest++ = usPixel;
+            //                    c <<= 1;
+            //                }
+            //            }
+            //            break;
+            //    } // switch on bpp 
+            //    return;
+            // }
             switch (pDraw->iBpp) {
                 case 8:
                     for (x=0; x<pDraw->iWidth; x++) {
                         c = *s++;
                         pPal = &pDraw->pPalette[c * 3];
-                        usPixel = (pPal[2] >> 3); // blue
-                        usPixel |= ((pPal[1] >> 2) << 5); // green
-                        usPixel |= ((pPal[0] >> 3) << 11); // red
+                        uint32_t a =    pDraw->pPalette[768 + c];
+                        usPixel = (((pPal[2] * a) >> 8) >> 3); // blue
+                        usPixel |= ((((pPal[1] * a) >> 8) >> 2) << 5); // green
+                        usPixel |= ((((pPal[0] * a) >> 8) >> 3) << 11); // red
                         if (iEndiannes == PNG_RGB565_BIG_ENDIAN)
                             usPixel = __builtin_bswap16(usPixel);
                         *pDest++ = usPixel;
